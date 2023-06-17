@@ -1,0 +1,36 @@
+name: Azure Powershell with OIDC
+on:
+  workflow_dispatch
+
+permissions:
+      id-token: write
+      contents: read
+
+jobs:
+  connect_azure_and_run_script:
+    name: Connect to Azure and Run Inline Script
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 'Az CLI login'
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_APP_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          enable-AzPSSession: true
+
+      - name: 'Run Script'
+        uses: azure/powershell@v1
+        with:
+          inlineScript: |
+            try {
+              Get-Module -Name Az -ListAvailable | Select-Object -Property Name,Version
+            }
+            catch {
+              Write-Error "An error occurred: $_"
+            }
+            finally {
+              Disconnect-AzAccount
+            }
+          azPSVersion: 'latest'
